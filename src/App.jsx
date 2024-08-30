@@ -1,63 +1,60 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { nanoid } from "nanoid";
 import "./App.css";
-import Description from "./components/Description/Description";
-import Options from "./components/Options/Options";
-import Feedback from "./components/Feedback/Feedback";
-import Notification from "./components/Notification/Notification";
+import ContactList from "./components/ContactList/ContactList";
+import SearchBox from "./components/SearchBox/SearchBox";
+import ContactForm from "./components/ContactForm/ContactForm";
 
 function App() {
-  const [options, setOptions] = useState(() => {
-    const savedOptions = window.localStorage.getItem("options");
+  const [contacts, setContacts] = useState(() => {
+    const savedContacts = window.localStorage.getItem("saved-contacts");
 
-    if (savedOptions !== null) {
-      return JSON.parse(savedOptions);
+    if (savedContacts !== null) {
+      return JSON.parse(savedContacts);
     }
 
-    return {
-      good: 0,
-      neutral: 0,
-      bad: 0,
-    };
+    return [
+      { id: "id-1", name: "Rosie Simpson", number: "459-12-56" },
+      { id: "id-2", name: "Hermione Kline", number: "443-89-12" },
+      { id: "id-3", name: "Eden Clements", number: "645-17-79" },
+      { id: "id-4", name: "Annie Copeland", number: "227-91-26" },
+    ];
   });
 
   useEffect(() => {
-    window.localStorage.setItem("options", JSON.stringify(options));
-  }, [options]);
+    window.localStorage.setItem("saved-contacts", JSON.stringify(contacts));
+  }, [contacts]);
 
-  const totalFeedback = options.good + options.neutral + options.bad;
-  const positiveFeedback = Math.round((options.good / totalFeedback) * 100);
-
-  const updateFeedback = (feedbackType) => {
-    setOptions({ ...options, [feedbackType]: options[feedbackType] + 1 });
+  const [filterValue, setFilterValue] = useState("");
+  const handleFilter = (event) => {
+    const value = event.target.value;
+    setFilterValue(value);
   };
 
-  const resetFeedback = () => {
-    setOptions({
-      good: 0,
-      neutral: 0,
-      bad: 0,
-    });
+  const filteredContacts = contacts.filter((contact) =>
+    contact.name.toLowerCase().includes(filterValue.toLowerCase())
+  );
+
+  const handleSubmit = (values, actions) => {
+    const newContact = { ...values, id: nanoid() };
+
+    setContacts([...contacts, newContact]);
+    actions.resetForm();
+  };
+
+  const onDeleteContact = (id) => {
+    setContacts(contacts.filter((contact) => contact.id !== id));
   };
 
   return (
     <div>
-      <Description />
-      <Options
-        total={totalFeedback}
-        update={updateFeedback}
-        reset={resetFeedback}
+      <h1>Phonebook</h1>
+      <ContactForm handleSubmit={handleSubmit} />
+      <SearchBox value={filterValue} handleFilter={handleFilter} />
+      <ContactList
+        contacts={filteredContacts}
+        onDeleteContact={onDeleteContact}
       />
-      {totalFeedback ? (
-        <Feedback
-          good={options.good}
-          neutral={options.neutral}
-          bad={options.bad}
-          totalFeedback={totalFeedback}
-          positiveFeedback={positiveFeedback}
-        />
-      ) : (
-        <Notification />
-      )}
     </div>
   );
 }
