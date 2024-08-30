@@ -1,26 +1,65 @@
-import Profile from "./components/Profile/Profile";
-import userData from "/src/userData.json";
+import { useEffect, useState } from "react";
+import "./App.css";
+import Description from "./components/Description/Description";
+import Options from "./components/Options/Options";
+import Feedback from "./components/Feedback/Feedback";
+import Notification from "./components/Notification/Notification";
 
-import FriendList from "./components/FriendList/FriendList";
-import friends from "/src/friends.json";
+function App() {
+  const [options, setOptions] = useState(() => {
+    const savedOptions = window.localStorage.getItem("options");
 
-import TransactionHistory from "./components/TransactionHistory/TransactionHistory";
-import transactions from "/src/transactions.json";
+    if (savedOptions !== null) {
+      return JSON.parse(savedOptions);
+    }
 
-const App = () => {
+    return {
+      good: 0,
+      neutral: 0,
+      bad: 0,
+    };
+  });
+
+  useEffect(() => {
+    window.localStorage.setItem("options", JSON.stringify(options));
+  }, [options]);
+
+  const totalFeedback = options.good + options.neutral + options.bad;
+  const positiveFeedback = Math.round((options.good / totalFeedback) * 100);
+
+  const updateFeedback = (feedbackType) => {
+    setOptions({ ...options, [feedbackType]: options[feedbackType] + 1 });
+  };
+
+  const resetFeedback = () => {
+    setOptions({
+      good: 0,
+      neutral: 0,
+      bad: 0,
+    });
+  };
+
   return (
-    <>
-      <Profile
-        name={userData.username}
-        tag={userData.tag}
-        location={userData.location}
-        image={userData.avatar}
-        stats={userData.stats}
+    <div>
+      <Description />
+      <Options
+        total={totalFeedback}
+        update={updateFeedback}
+        reset={resetFeedback}
       />
-      <FriendList friends={friends} />
-      <TransactionHistory items={transactions} />
-    </>
+      {totalFeedback ? (
+        <Feedback
+          good={options.good}
+          neutral={options.neutral}
+          bad={options.bad}
+          totalFeedback={totalFeedback}
+          positiveFeedback={positiveFeedback}
+        />
+      ) : (
+        <Notification />
+      )}
+    </div>
   );
-};
+}
 
 export default App;
