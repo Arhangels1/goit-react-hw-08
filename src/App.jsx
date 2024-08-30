@@ -1,62 +1,97 @@
 import { useState, useEffect } from "react";
-import { nanoid } from "nanoid";
-import "./App.css";
-import ContactList from "./components/ContactList/ContactList";
-import SearchBox from "./components/SearchBox/SearchBox";
-import ContactForm from "./components/ContactForm/ContactForm";
+import SearchBar from "./components/SearchBar/SearchBar";
+import ImageGallery from "./components/ImageGallery/ImageGallery";
+import ImageModal from "./components/ImageModal/ImageModal";
+import Loader from "./components/Loader/Loader";
+import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
+import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
+import fetchPhotos from "./fetchAPI";
+import toast, { Toaster } from "react-hot-toast";
 
-function App() {
-  const [contacts, setContacts] = useState(() => {
-    const savedContacts = window.localStorage.getItem("saved-contacts");
-
-    if (savedContacts !== null) {
-      return JSON.parse(savedContacts);
-    }
-
-    return [
-      { id: "id-1", name: "Rosie Simpson", number: "459-12-56" },
-      { id: "id-2", name: "Hermione Kline", number: "443-89-12" },
-      { id: "id-3", name: "Eden Clements", number: "645-17-79" },
-      { id: "id-4", name: "Annie Copeland", number: "227-91-26" },
-    ];
+const App = () => {
+  const [images, setImages] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(false);
+  const [searchingValue, setSearchingValue] = useState("");
+  const [modalIsOpen, setIsOpen] = useState(false);
+  const [pageNumber, setPageNumber] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [currentImage, setCurrentImage] = useState({
+    url: "",
+    alt: "",
   });
 
+  function openModal() {
+    setIsOpen(true);
+  }
+
+  function closeModal() {
+    setIsOpen(false);
+  }
+
   useEffect(() => {
-    window.localStorage.setItem("saved-contacts", JSON.stringify(contacts));
-  }, [contacts]);
+    if (searchingValue.trim() === "") return;
+    const getPhotos = async (value) => {
+      setError(false);
+      setIsLoading(true);
+      try {
+        const data = await fetchPhotos(value, pageNumber);
+        setImages((prevImages) => {
+          if (prevImages !== null) {
+            return [...prevImages, ...data.results];
+          }
+          return data.results;
+        });
 
-  const [filterValue, setFilterValue] = useState("");
-  const handleFilter = (event) => {
-    const value = event.target.value;
-    setFilterValue(value);
-  };
+        setTotalPages(data.total_pages);
+        if (data.total_pages === 0) {
+          toast.error("Nothing was found for your request", {
+            duration: 4000,
+            position: "top-right",
+          });
+          return;
+        }
+      } catch (error) {
+        setError(true);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getPhotos(searchingValue);
+  }, [searchingValue, pageNumber]);
 
-  const filteredContacts = contacts.filter((contact) =>
-    contact.name.toLowerCase().includes(filterValue.toLowerCase())
-  );
-
-  const handleSubmit = (values, actions) => {
-    const newContact = { ...values, id: nanoid() };
-
-    setContacts([...contacts, newContact]);
-    actions.resetForm();
-  };
-
-  const onDeleteContact = (id) => {
-    setContacts(contacts.filter((contact) => contact.id !== id));
+  const handleSubmit = (userValue) => {
+    setImages(null);
+    setPageNumber(1);
+    setSearchingValue(userValue);
   };
 
   return (
     <div>
-      <h1>Phonebook</h1>
-      <ContactForm handleSubmit={handleSubmit} />
-      <SearchBox value={filterValue} handleFilter={handleFilter} />
-      <ContactList
-        contacts={filteredContacts}
-        onDeleteContact={onDeleteContact}
+      <SearchBar onSubmit={handleSubmit} />
+      {images !== null && (
+        <ImageGallery
+          images={images}
+          openModal={openModal}
+          setCurrentImage={setCurrentImage}
+        />
+      )}
+      <ImageModal
+        modalIsOpen={modalIsOpen}
+        closeModal={closeModal}
+        currentImage={currentImage}
       />
+      {isLoading && <Loader />}
+      {error && <ErrorMessage />}
+      {totalPages > pageNumber && (
+        <LoadMoreBtn
+          handleClick={() => {
+            setPageNumber(pageNumber + 1);
+          }}
+        />
+      )}
     </div>
   );
-}
+};
 
 export default App;
