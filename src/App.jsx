@@ -1,97 +1,44 @@
-import { useState, useEffect } from "react";
-import SearchBar from "./components/SearchBar/SearchBar";
-import ImageGallery from "./components/ImageGallery/ImageGallery";
-import ImageModal from "./components/ImageModal/ImageModal";
+import { Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
+
+import Navigation from "./components/Navigation/Navigation";
 import Loader from "./components/Loader/Loader";
-import ErrorMessage from "./components/ErrorMessage/ErrorMessage";
-import LoadMoreBtn from "./components/LoadMoreBtn/LoadMoreBtn";
-import fetchPhotos from "./fetchAPI";
-import toast, { Toaster } from "react-hot-toast";
 
-const App = () => {
-  const [images, setImages] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState(false);
-  const [searchingValue, setSearchingValue] = useState("");
-  const [modalIsOpen, setIsOpen] = useState(false);
-  const [pageNumber, setPageNumber] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
-  const [currentImage, setCurrentImage] = useState({
-    url: "",
-    alt: "",
-  });
+// import HomePage from "./pages/HomePage";
+// import MoviesPage from "./pages/MoviesPage";
+// import MovieDetailsPage from "./pages/MovieDetailsPage";
+// import MovieCast from "./components/MovieCast/MovieCast";
+// import MovieReviews from "./components/MovieReviews/MovieReviews";
+// import NotFoundPage from "./pages/NotFoundPage";
 
-  function openModal() {
-    setIsOpen(true);
-  }
+const HomePage = lazy(() => import("./pages/HomePage"));
+const MoviesPage = lazy(() => import("./pages/MoviesPage"));
+const MovieDetailsPage = lazy(() => import("./pages/MovieDetailsPage"));
+const MovieCast = lazy(() => import("./components/MovieCast/MovieCast"));
+const MovieReviews = lazy(() =>
+  import("./components/MovieReviews/MovieReviews")
+);
+const NotFoundPage = lazy(() => import("./pages/NotFoundPage"));
 
-  function closeModal() {
-    setIsOpen(false);
-  }
+//import css from "./App.module.css";
 
-  useEffect(() => {
-    if (searchingValue.trim() === "") return;
-    const getPhotos = async (value) => {
-      setError(false);
-      setIsLoading(true);
-      try {
-        const data = await fetchPhotos(value, pageNumber);
-        setImages((prevImages) => {
-          if (prevImages !== null) {
-            return [...prevImages, ...data.results];
-          }
-          return data.results;
-        });
-
-        setTotalPages(data.total_pages);
-        if (data.total_pages === 0) {
-          toast.error("Nothing was found for your request", {
-            duration: 4000,
-            position: "top-right",
-          });
-          return;
-        }
-      } catch (error) {
-        setError(true);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    getPhotos(searchingValue);
-  }, [searchingValue, pageNumber]);
-
-  const handleSubmit = (userValue) => {
-    setImages(null);
-    setPageNumber(1);
-    setSearchingValue(userValue);
-  };
-
+function App() {
   return (
     <div>
-      <SearchBar onSubmit={handleSubmit} />
-      {images !== null && (
-        <ImageGallery
-          images={images}
-          openModal={openModal}
-          setCurrentImage={setCurrentImage}
-        />
-      )}
-      <ImageModal
-        modalIsOpen={modalIsOpen}
-        closeModal={closeModal}
-        currentImage={currentImage}
-      />
-      {isLoading && <Loader />}
-      {error && <ErrorMessage />}
-      {totalPages > pageNumber && (
-        <LoadMoreBtn
-          handleClick={() => {
-            setPageNumber(pageNumber + 1);
-          }}
-        />
-      )}
+      <Navigation />
+      <Suspense fallback={<Loader />}>
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/movies" element={<MoviesPage />} />
+          <Route path="/movies/:movieId" element={<MovieDetailsPage />}>
+            <Route path="cast" element={<MovieCast />} />
+            <Route path="reviews" element={<MovieReviews />} />
+          </Route>
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Suspense>
     </div>
   );
-};
+}
 
 export default App;
