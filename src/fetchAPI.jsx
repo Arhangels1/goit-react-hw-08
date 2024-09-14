@@ -1,22 +1,59 @@
 import axios from "axios";
+export {
+  fetchTrendingMovies,
+  fetchMovies,
+  fetchMovieDetails,
+  fetchReviews,
+  fetchCast,
+};
 
-const fetchPhotos = async (userRequest, pageNumber = 1) => {
-  const params = {
-    query: userRequest,
-    page: pageNumber,
-    orientation: "landscape",
-    per_page: 20,
-  };
-  const { data } = await axios.get(
-    "https://api.unsplash.com/search/photos?client_id=A7YRUc57iXs06cE1X3dTKf3BBSG-taztQvX54TDLNgI",
-    {
-      params,
-      headers: {
-        "Accept-Version": "v1",
-      },
-    }
+const options = {
+  method: "GET",
+  headers: {
+    accept: "application/json",
+    Authorization:
+      "Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiIxOGQ2ZDE0NmY2ODg3YzE2NzgzYjllNTRjNTlhNDI2NyIsIm5iZiI6MTcyMzczNjEwNS43MTA4NTcsInN1YiI6IjY2YmUxZDliNDZlMTk1NTlmOTgyOGQ4MiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.71EI3TJpafnszUo1y8n_5vNEaVsLm-HNv879Gjnj9gY",
+  },
+};
+
+const fetchTrendingMovies = async () => {
+  const { data } = await axios(
+    "https://api.themoviedb.org/3/trending/movie/day?language=en-US",
+    options
+  );
+  return data.results;
+};
+
+const fetchMovies = async (userRequest) => {
+  const { data } = await axios(
+    `https://api.themoviedb.org/3/search/movie?query=${userRequest}&language=en-US&page=1`,
+    options
+  );
+  return data.results;
+};
+
+//'https://api.themoviedb.org/3/search/movie?query=gru&language=en-US&page=1'
+
+const fetchMovieDetails = async (movieId) => {
+  const { data } = await axios(
+    `https://api.themoviedb.org/3/movie/${movieId}?language=en-US`,
+    options
   );
   return data;
 };
 
-export default fetchPhotos;
+const fetchCast = async (movieId) => {
+  const { data } = await axios(
+    `https://api.themoviedb.org/3/movie/${movieId}/credits`,
+    options
+  );
+  return data;
+};
+
+const fetchReviews = async (movieId) => {
+  const { data } = await axios(
+    `https://api.themoviedb.org/3/movie/${movieId}/reviews?language=en-US&page=1`,
+    options
+  );
+  return data;
+};
