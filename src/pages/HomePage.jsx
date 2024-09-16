@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
 
-import MoviesList from "../components/MoviesList/MoviesList";
+import MoviesList from "./components/MoviesList/MoviesList";
 
-import { fetchTrendingMovies } from "../fetchAPi";
+import { fetchTrendingMovies } from "./fetchAPi";
 
 const HomePage = () => {
   const [movies, setMovies] = useState([]);
