@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
-import MoviesList from "./components/MoviesList/MoviesList";
+import MoviesList from "../components/MoviesList/MoviesList";
 
-import { fetchMovies } from "./fetchAPi";
+import { fetchMovies } from "../fetchAPi";
 
 const MoviesPage = () => {
   const [movies, setMovies] = useState(null);
